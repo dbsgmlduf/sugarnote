@@ -9,23 +9,16 @@ class BloodSugarPage extends StatefulWidget {
 }
 
 class _BloodSugarPageState extends State<BloodSugarPage> {
-  DateTime selectedDate = DateTime.now();
-  Map<String, int> bloodSugarData = {
-    '아침 공복': -1,
-    '아침 식후': -1,
-    '점심 공복': -1,
-    '점심 식후': -1,
-    '저녁 공복': -1,
-    '저녁 식후': -1,
-  };
+  DateTime today = DateTime.now();
 
-  final Map<String, int> normalRanges = {
-    '아침 공복': 110,
-    '아침 식후': 140,
-    '점심 공복': 110,
-    '점심 식후': 140,
-    '저녁 공복': 110,
-    '저녁 식후': 140,
+  // 더미 데이터
+  Map<String, String?> bloodSugarData = {
+    '아침공복': null,
+    '아침식후': null,
+    '점심식전': null,
+    '점심식후': null,
+    '저녁식전': null,
+    '취침전': null,
   };
 
   @override
@@ -35,8 +28,8 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
   }
 
   Future<void> _fetchBloodSugarData() async {
-    final user_no = 2; // 임시로 저장된 사용자 번호
-    final measure_date = DateFormat('yyyy-MM-dd').format(selectedDate);
+    final user_no = 1; // 임시로 저장된 사용자 번호
+    final measure_date = DateFormat('yyyy-MM-dd').format(today);
 
     try {
       final response = await http.post(
@@ -53,15 +46,15 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['message'] == '1') {
-          final bloodSugarValues = data['blood_sugar'].split(',').map(int.parse).toList();
+          final bloodSugarValues = data['blood_sugar'].split(',');
           setState(() {
             bloodSugarData = {
-              '아침 공복': bloodSugarValues[0],
-              '아침 식후': bloodSugarValues[1],
-              '점심 공복': bloodSugarValues[2],
-              '점심 식후': bloodSugarValues[3],
-              '저녁 공복': bloodSugarValues[4],
-              '저녁 식후': bloodSugarValues[5],
+              '아침공복': bloodSugarValues[0] == '-1' ? null : bloodSugarValues[0],
+              '아침식후': bloodSugarValues[1] == '-1' ? null : bloodSugarValues[1],
+              '점심식전': bloodSugarValues[2] == '-1' ? null : bloodSugarValues[2],
+              '점심식후': bloodSugarValues[3] == '-1' ? null : bloodSugarValues[3],
+              '저녁식전': bloodSugarValues[4] == '-1' ? null : bloodSugarValues[4],
+              '취침전': bloodSugarValues[5] == '-1' ? null : bloodSugarValues[5],
             };
           });
         } else {
@@ -76,8 +69,8 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
   }
 
   Future<void> _submitBloodSugarData(String time, int value) async {
-    final user_no = 2; // 임시로 저장된 사용자 번호
-    final measure_date = DateFormat('yyyy-MM-dd').format(selectedDate);
+    final user_no = 1; // 임시로 저장된 사용자 번호
+    final measure_date = DateFormat('yyyy-MM-dd').format(today);
 
     try {
       final response = await http.post(
@@ -96,7 +89,7 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
         final data = jsonDecode(response.body);
         if (data['message'] == '1') {
           setState(() {
-            bloodSugarData[time] = value;
+            bloodSugarData[time] = value.toString();
           });
         } else {
           print('Failed to submit blood sugar data: ${data['message']}');
@@ -114,46 +107,47 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
-        children: [
-          SizedBox(height: 20),
-          ListTile(
-            title: Text("Select date"),
-            subtitle: Text(DateFormat.yMMMEd().format(selectedDate)),
-            trailing: Icon(Icons.edit),
-            onTap: _pickDate,
-          ),
-          SizedBox(height: 20),
-          Expanded(
-            child: ListView(
-              children: bloodSugarData.entries.map((entry) {
-                bool isHigh = _isBloodSugarHigh(entry.key, entry.value);
-                return Card(
-                  color: isHigh ? Colors.red : Colors.white,
-                  margin: EdgeInsets.symmetric(vertical: 4.0),
-                  child: ListTile(
-                    title: Text(entry.key),
-                    trailing: Text(
-                      entry.value == -1 ? '측정된 데이터가 없습니다.' : '${entry.value} mg/dL',
-                      style: TextStyle(color: isHigh ? Colors.white : Colors.black),
-                    ),
-                    onTap: entry.value == -1 ? () => _showInputDialog(entry.key) : null,
-                  ),
-                );
-              }).toList(),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            child: Row(
+              children: <Widget>[
+                Text(
+                  '오늘 날짜',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+                Spacer(),
+                Text(
+                  DateFormat('yyyy년 MM월 dd일 EEE').format(today),
+                  style: TextStyle(fontSize: 16),
+                ),
+              ],
             ),
           ),
-          SizedBox(height: 20),
+          SizedBox(height: 16.0),
+          ...bloodSugarData.keys.map((time) {
+            final value = bloodSugarData[time];
+            return BloodSugarCard(
+              time: time,
+              value: value ?? '측정 필요',
+              isMeasured: value != null,
+              onAddPressed: () => _showInputDialog(context, time),
+            );
+          }).toList(),
+          Spacer(),
           Row(
             children: [
-              Icon(Icons.info_outline, color: Colors.blue, size: 16),
-              SizedBox(width: 8),
+              Icon(Icons.info, color: Colors.black, size: 16.0),
+              SizedBox(width: 8.0),
               Expanded(
                 child: Text(
-                  "공복 혈당은 8시간 이상의 금식 후 아침 공복 상태에서 측정해요. "
-                      "정상인은 결과가 110mg/dL 이하로 측정되요. "
-                      "식후 2시간 혈당은 식사 시작 시점부터 2시간 후 측정한 혈당을 말해요. "
-                      "140mg/dL 이하가 정상이에요.",
-                  style: TextStyle(color: Colors.black, fontSize: 12),
+                  "공복 혈당은 8시간 이상의 금식 후 아침 공복 상태에서 측정해요. 정상인은 결과가 110mg/dL 이하로 측정되요. 식후 2시간 혈당은 식사 시작 시점부터 2시간 후 측정한 혈당을 말해요. 140mg/dL 이하가 정상이에요.",
+                  style: TextStyle(fontSize: 14, color: Colors.black),
                 ),
               ),
             ],
@@ -163,47 +157,35 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
     );
   }
 
-  Future<void> _pickDate() async {
-    DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-    );
-    if (picked != null && picked != selectedDate) {
-      setState(() {
-        selectedDate = picked;
-        _fetchBloodSugarData();
-      });
-    }
-  }
+  void _showInputDialog(BuildContext context, String time) {
+    TextEditingController _textFieldController = TextEditingController();
 
-  Future<void> _showInputDialog(String time) async {
-    int newValue = 0;
-    final TextEditingController controller = TextEditingController();
-
-    return showDialog<void>(
+    showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (context) {
         return AlertDialog(
-          title: Text('혈당 입력 ($time)'),
+          title: Text("오늘의 혈당 입력"),
           content: TextField(
-            controller: controller,
+            controller: _textFieldController,
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(hintText: "Enter your blood sugar level"),
+            decoration: InputDecoration(
+              hintText: "혈당기에 적힌 숫자를 적어주세요",
+            ),
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('CANCEL'),
+              child: Text('취소'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: Text('SUBMIT'),
+              child: Text('저장'),
               onPressed: () {
-                newValue = int.parse(controller.text);
-                _submitBloodSugarData(time, newValue);
+                setState(() {
+                  bloodSugarData[time] = _textFieldController.text;
+                });
+                _submitBloodSugarData(time, int.parse(_textFieldController.text));
                 Navigator.of(context).pop();
               },
             ),
@@ -212,11 +194,60 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
       },
     );
   }
+}
 
-  bool _isBloodSugarHigh(String time, int value) {
-    if (value == -1) {
-      return false;
+class BloodSugarCard extends StatelessWidget {
+  final String time;
+  final String value;
+  final bool isMeasured;
+  final VoidCallback? onAddPressed;
+
+  BloodSugarCard({required this.time, required this.value, required this.isMeasured, this.onAddPressed});
+
+  Color _determineColor() {
+    if (isMeasured) {
+      int bloodSugarValue = int.tryParse(value) ?? 0;
+      if ((time == '아침공복' && bloodSugarValue > 110) ||
+          (time != '아침공복' && bloodSugarValue > 140)) {
+        return Colors.red;
+      } else {
+        return Colors.lightBlue;
+      }
+    } else {
+      return Colors.grey;
     }
-    return value > (normalRanges[time] ?? 140);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 4.0),
+      color: _determineColor(),
+      child: ListTile(
+        title: Text(
+          time,
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        trailing: isMeasured
+            ? Text(
+          value,
+          style: TextStyle(color: Colors.black, fontSize: 32),
+        )
+            : Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              value,
+              style: TextStyle(color: Colors.black, fontSize: 20),
+            ),
+            SizedBox(width: 8.0),
+            IconButton(
+              icon: Icon(Icons.add, size: 25, color: Colors.black),
+              onPressed: onAddPressed,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
