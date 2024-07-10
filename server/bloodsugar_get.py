@@ -35,11 +35,25 @@ def get_bloodsugar(user_no, measure_date):
             cursor.execute(select_query, (user_no, measure_date))
             result = cursor.fetchone()
 
+ 
+            if result is None:
+                # 데이터가 없으면 테이블 생성 및 데이터 삽입
+                insert_query = """
+                INSERT INTO bloodsugar (user_no, measure_date, measure)
+                VALUES (%s, %s, %s)
+                """
+                cursor.execute(insert_query, (user_no, measure_date, "-1,-1,-1,-1,-1,-1"))
+                connection.commit()
+
+                # 생성된 데이터 다시 조회
+                cursor.execute(select_query, (user_no, measure_date))
+                result = cursor.fetchone()
+
             return result
-        
+    
 
     except Error as e:
-        print("MySQL 데이터 조회 오류:", e)
+        print("MySQL 데이터 조회 또는 테이블 생성 오류:", e)
         return None
     finally:
         if 'cursor' in locals() and cursor is not None:
