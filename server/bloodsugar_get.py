@@ -1,17 +1,22 @@
 from flask import Flask, request, jsonify
 import mysql.connector
 from mysql.connector import Error
+# 환경변수 설정
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
+load_dotenv()
 
 # MySQL 연결 설정
 def get_db_connection():
     try:
+        
         connection = mysql.connector.connect(
-            host='localhost',
-            database='sugar_note',
-            user='root',
-            password='010319'
+            host = os.environ.get('DB_HOST'),
+            database = os.environ.get('DB_DATABASE'),
+            user=os.environ.get('DB_USER'),
+            password=os.environ.get('DB_PASSWORD')
         )
         return connection
     except Error as e:
@@ -35,7 +40,7 @@ def get_bloodsugar(user_no, measure_date):
 
             return result
         
-        
+
     except Error as e:
         print("MySQL 데이터 조회 오류:", e)
         return None
