@@ -4,8 +4,6 @@ from mysql.connector import Error
 from dotenv import load_dotenv
 import os
 
-
-# MySQL 연결 설정
 def get_db_connection():
     try:
         
@@ -20,29 +18,30 @@ def get_db_connection():
         print("MySQL 연결 오류:", e)
         return None
 
-# 데이터베이스에서 데이터 조회
-def get_bloodsugar(user_no, measure_date):
+# 사용자 정보 삽입 함수
+def insert_user(name,age,height, weight,ID,PW):
     try:
         connection = get_db_connection()
         if connection is not None:
-            cursor = connection.cursor(dictionary=True)
+            cursor = connection.cursor()
 
-            # bloodsugar 테이블에서 데이터 조회
-            select_query = """
-            SELECT * FROM bloodsugar 
-            WHERE user_no = %s AND measure_date = %s
+            # userinfo 테이블에 데이터 삽입
+            insert_query = """
+            INSERT INTO user (name,age,height, weight,ID,PW)
+            VALUES (%s, %s, %s, %s, %s, %s)
             """
-            cursor.execute(select_query, (user_no, measure_date))
-            result = cursor.fetchone()
+            record = (name,age,height, weight,ID,PW)
 
-            return result
-        
+            cursor.execute(insert_query, record)
+            connection.commit()
 
+            return True
     except Error as e:
-        print("MySQL 데이터 조회 오류:", e)
-        return None
+        print("MySQL 데이터 삽입 오류:", e)
+        return False
     finally:
         if 'cursor' in locals() and cursor is not None:
             cursor.close()
         if 'connection' in locals() and connection.is_connected():
             connection.close()
+
