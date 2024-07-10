@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'bloodsugarhistory.dart';
 import 'injectiondatahistory.dart';
-import 'function3page.dart';
+import 'exercisehistory.dart';
 
 class PastDataPage extends StatefulWidget {
   @override
@@ -15,13 +15,13 @@ class _PastDataPageState extends State<PastDataPage> {
   List<Widget> pages = [
     BloodSugarPage(),
     InjectionDataPage(),
-    Function3Page(),
+    ExerciseHistoryPage(),
   ];
 
   List<String> titles = [
     '혈당',
     '인슐린',
-    '기능 3',
+    '운동',
   ];
 
   @override
