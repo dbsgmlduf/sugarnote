@@ -33,20 +33,6 @@ def insert_bloodsugar(user_no, blood_sugar, measure_date):
         if 'connection' in locals() and connection.is_connected():
             connection.close()
 
-#FLASK
-def handle_insert_bloodsugar():
-    data = request.get_json()
-    try:
-        user_no = data['user_no']
-        blood_sugar = data['blood_sugar']
-        measure_date = data['measure_date'] 
 
-        if insert_bloodsugar(user_no, blood_sugar, measure_date):
-            return jsonify({'message': '혈당 정보 삭제 성공'})
-        else:
-            return jsonify({'message': '혈당 정보 삭제 실패'}), 500
-        
-    except KeyError as e:
-        return jsonify({'message': f'필수 데이터 누락: {str(e)}'}), 400
 
     
