@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // 날짜 포맷을 위해 필요합니다.
 import '../detailfeature/bloodsugarpage.dart';
 import '../detailfeature/injectionpage.dart';
+import '../detailfeature/exercisepage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,7 +28,7 @@ class _HomeScreenState extends State<Homescreen> {
   int _currentIndex = 0;
   PageController _pageController = PageController();
 
-  List<String> pageTitles = ['오늘의 혈당', '인슐린 기록'];
+  List<String> pageTitles = ['오늘의 혈당', '인슐린 기록','운동량 기록'];
 
   @override
   Widget build(BuildContext context) {
@@ -50,10 +51,11 @@ class _HomeScreenState extends State<Homescreen> {
             children: [
               BloodSugarPage(),
               InjectionPage(),
+              ExercisePage()
             ],
           ),
           Positioned(
-            bottom: 16.0,
+            bottom: 5.0,
             left: 0,
             right: 0,
             child: Row(
@@ -62,6 +64,8 @@ class _HomeScreenState extends State<Homescreen> {
                 _buildPageIndicator(0),
                 SizedBox(width: 8.0),
                 _buildPageIndicator(1),
+                SizedBox(width: 8.0),
+                _buildPageIndicator(2),
               ],
             ),
           ),
@@ -72,8 +76,8 @@ class _HomeScreenState extends State<Homescreen> {
 
   Widget _buildPageIndicator(int index) {
     return Container(
-      width: 12.0,
-      height: 12.0,
+      width: 10.0,
+      height: 10.0,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: _currentIndex == index ? Colors.black : Colors.grey,
