@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'bloodsugarpage.dart';
-import 'injectiondatapage.dart';
+import 'bloodsugarhistory.dart';
+import 'injectiondatahistory.dart';
 import 'function3page.dart';
 
 class PastDataPage extends StatefulWidget {
