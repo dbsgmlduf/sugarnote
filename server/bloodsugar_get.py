@@ -34,6 +34,8 @@ def get_bloodsugar(user_no, measure_date):
             result = cursor.fetchone()
 
             return result
+        
+        
     except Error as e:
         print("MySQL 데이터 조회 오류:", e)
         return None
@@ -42,26 +44,3 @@ def get_bloodsugar(user_no, measure_date):
             cursor.close()
         if 'connection' in locals() and connection.is_connected():
             connection.close()
-
-@app.route('/')
-def hello():
-    return 'Hello, World!'
-
-# Flask 라우트 정의
-@app.route('/get_data', methods=['GET'])
-def get_data():
-    user_no = request.args.get('user_no')
-    measure_date = request.args.get('measure_date')
-
-    if not user_no or not measure_date:
-        return jsonify({'message': 'user_no와 measure_date를 제공해야 합니다.'}), 400
-
-    result = get_bloodsugar(user_no, measure_date)
-
-    if result:
-        return jsonify(result)
-    else:
-        return jsonify({'message': '데이터 조회 실패'}), 404
-
-if __name__ == '__main__':
-    app.run(debug=True)

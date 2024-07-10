@@ -2,11 +2,11 @@ from flask import request, jsonify
 import mysql.connector
 from mysql.connector import Error
 
-def delete_bloodsugar(user_no, measure_date, db_name):
+def delete_bloodsugar(user_no, measure_date):
     try:
         connection = mysql.connector.connect(
             host='localhost',
-            database=db_name,
+            database = 'sugar_note',
             user='root',
             password='010319'
         )

@@ -24,11 +24,12 @@ def handle_insert_bloodsugar():
 
         success, error = insert_bloodsugar(user_no, blood_sugar, measure_date)
         if success:
-            return jsonify({'message': '혈당 정보 삽입 성공'})
+            return jsonify({'message': '1'})
         else:
-            return jsonify({'message': '혈당 정보 삽입 실패', 'error': error}), 500
-    except KeyError as e:
-        return jsonify({'message': f'필수 데이터 누락: {str(e)}'}), 400 
+            return jsonify({'message': '00'})
+        
+    except Exception as error:
+        return jsonify({'message': '0'})
     
 
 @app.route('/delete_bloodsugar', methods=['delete'])
@@ -37,36 +38,35 @@ def handle_delete_bloodsugar():
         data = request.get_json()
         user_no = data['user_no']
         measure_date = data['measure_date']
-        db_name = 'sugar_note'
 
-        success,error = delete_bloodsugar(user_no, measure_date, db_name)
+        success,error = delete_bloodsugar(user_no, measure_date)
         if success :
-            return jsonify({'message': '혈당 정보 삭제 성공'})
-        else:
-            return jsonify({'message': '혈당 정보 삭제 실패'}), 500
+            return jsonify({'message': '1'})
         
-    except KeyError as e:
-        return jsonify({'message': f'필수 데이터 누락: {str(e)}'}), 400
     except Exception as e:
-        return jsonify({'message': '요청 처리 중 오류 발생', 'error': str(e)}), 500
+        return jsonify({'message' : '0'})
 
-if __name__ == '__main__':
-    app.run(debug=True)
-
-@app.route('/get_bloodsugar_data', methods=['GET'])
-def get_data():
-    user_no = request.args.get('user_no')
-    measure_date = request.args.get('measure_date')
+@app.route('/get_bloodsugar', methods=['GET'])
+def get_bloodsugar_route():
+    data = request.get_json()
+    user_no = data['user_no']
+    measure_date = data['measure_date']
 
     if not user_no or not measure_date:
-        return jsonify({'message': 'user_no와 measure_date를 제공해야 합니다.'}), 400
+        return jsonify({'message': 'user_no와 measure_date를 제공해야 합니다.'})
 
-    result = get_bloodsugar(user_no, measure_date)
+    bloodsugar_data = get_bloodsugar(user_no, measure_date)
 
-    if result:
-        return jsonify(result)
+    if bloodsugar_data:
+        response = {
+            'message':'1',
+            'user_no': bloodsugar_data['user_no'],
+            'measure_date': bloodsugar_data['measure_date'],
+            'blood_sugar': bloodsugar_data['blood_sugar'],
+        }
+        return jsonify(response)
     else:
-        return jsonify({'message': '데이터 조회 실패'}), 404
+        return jsonify({'message': '0'})
 
 if __name__ == '__main__':
     app.run(debug=True)

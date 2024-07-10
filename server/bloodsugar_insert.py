@@ -24,7 +24,7 @@ def insert_bloodsugar(user_no, blood_sugar, measure_date):
             connection.commit()
 
             return True, None
-    except Error as e:
+    except Exception as e:
         print("MySQL 데이터 삽입 오류:", e)
         return False, str(e)
     finally:
