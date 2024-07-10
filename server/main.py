@@ -62,10 +62,7 @@ def update_measure_route():
         new_measure = data['new_measure']
         measure_date = data['measure_date']
     
-        success, error = update_bloodsugar_measure(user_no, new_measure, measure_date)
-    
-        if not user_no or not new_measure or not measure_date:
-            return jsonify({"message":'0'})
+        success= update_bloodsugar_measure(user_no, new_measure, measure_date)
 
         if success:
             return jsonify({"message": "1"})
