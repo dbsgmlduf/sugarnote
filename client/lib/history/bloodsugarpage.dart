@@ -99,7 +99,7 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
     if (date.day % 2 == 0) {
       return {
         '아침 공복': 110,
-        '아침 식후': 190,
+        '아침 식후': 130,
         '점심 공복': 100,
         '점심 식후': 120,
         '저녁 공복': 105,

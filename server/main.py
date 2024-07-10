@@ -73,7 +73,7 @@ def update_measure_route():
     except Exception as error:
         return jsonify({'message': '0'})
 
-@app.route('/get_bloodsugar', methods=['GET'])
+@app.route('/get_bloodsugar', methods=['POST'])
 def get_bloodsugar_route():
     data = request.get_json()
     user_no = data['user_no']
