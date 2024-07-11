@@ -5,6 +5,7 @@ from bloodsugar_insert import update_bloodsugar_measure
 from bloodsugar_get import get_bloodsugar
 from user_insert import insert_user
 from insulin import get_injection,update_injection
+from mets_function import add_exercise
 
 app = Flask(__name__)
 
@@ -114,7 +115,22 @@ def update_injection_route():
     except Exception as error:
         return jsonify({'message': '0'})
     
+#운동량 계산 후 기입    
+@app.route('/add_exercise', methods=['POST'])
+def add_exercise_route():
+    try:
+        data = request.json
+        user_no = data.get('user_no')
+        exercise = data.get('exercise')
+        exercise_time = data.get('exercise_time')
+        measure_date = data.get('measure_date')
 
+        result, status_code = add_exercise(user_no, exercise, exercise_time, measure_date)
+        return jsonify(result), status_code
+
+    except Exception as error:
+        return jsonify({'message': '0'})
+    
 if __name__ == '__main__':
     app.run(debug=True)
 
