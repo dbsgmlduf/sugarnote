@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ExerciseHistoryPage extends StatefulWidget {
   @override
@@ -11,22 +13,55 @@ class _ExerciseHistoryPageState extends State<ExerciseHistoryPage> {
   List<Map<String, dynamic>> exerciseRecords = [];
   int totalCalories = 0;
 
-  void _fetchExerciseData(DateTime date) {
-    // 여기에 실제 데이터를 가져오는 로직을 추가해야 합니다.
-    // 지금은 예시로 더미 데이터를 사용합니다.
-    if (date.day % 2 == 0) {
-      setState(() {
-        exerciseRecords = [
-          {'exercise': '걷기', 'calories': 100},
-          {'exercise': '달리기', 'calories': 200},
-        ];
-        totalCalories = 300;
-      });
-    } else {
+  @override
+  void initState() {
+    super.initState();
+    _fetchExerciseData(selectedDate);
+  }
+
+  Future<void> _fetchExerciseData(DateTime date) async {
+    final user_no = 1; // 임시로 저장된 사용자 번호
+    final measure_date = DateFormat('yyyy-MM-dd').format(date);
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:5000/get_exercise'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'user_no': user_no,
+          'measure_date': measure_date,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data[0]['message'] == '1') {
+          setState(() {
+            exerciseRecords = List<Map<String, dynamic>>.from(data[1]['exercise_details']);
+            totalCalories = (data[1]['total_kcal'] as num).round(); // num을 int로 변환
+          });
+        } else {
+          setState(() {
+            exerciseRecords = [];
+            totalCalories = 0;
+          });
+          print('Failed to fetch exercise data: ${data[0]['message']}');
+        }
+      } else {
+        setState(() {
+          exerciseRecords = [];
+          totalCalories = 0;
+        });
+        print('Failed to fetch exercise data. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
       setState(() {
         exerciseRecords = [];
         totalCalories = 0;
       });
+      print('Error fetching exercise data: $e');
     }
   }
 
@@ -43,12 +78,6 @@ class _ExerciseHistoryPageState extends State<ExerciseHistoryPage> {
         _fetchExerciseData(picked);
       });
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchExerciseData(selectedDate);
   }
 
   @override
@@ -78,8 +107,9 @@ class _ExerciseHistoryPageState extends State<ExerciseHistoryPage> {
                   itemCount: exerciseRecords.length,
                   itemBuilder: (context, index) {
                     return ListTile(
+                      leading: Icon(_getIconForExercise(exerciseRecords[index]['exercise'])),
                       title: Text(exerciseRecords[index]['exercise']),
-                      trailing: Text('${exerciseRecords[index]['calories']} Kcal'),
+                      trailing: Text('${exerciseRecords[index]['kcal']} Kcal'),
                     );
                   },
                 ),
@@ -98,5 +128,24 @@ class _ExerciseHistoryPageState extends State<ExerciseHistoryPage> {
         ),
       ),
     );
+  }
+
+  IconData _getIconForExercise(String exercise) {
+    switch (exercise) {
+      case 'CYCLING':
+        return Icons.directions_bike;
+      case 'SWIMMING':
+        return Icons.pool;
+      case 'Bodyweight':
+        return Icons.fitness_center;
+      case 'Fitness':
+        return Icons.fitness_center;
+      case 'Running':
+        return Icons.directions_run;
+      case 'SOCCER':
+        return Icons.sports_soccer;
+      default:
+        return Icons.fitness_center;
+    }
   }
 }
