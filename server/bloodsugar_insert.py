@@ -54,37 +54,21 @@ def update_bloodsugar_measure(user_no, new_measure, measure_date):
         if connection is not None:
             cursor = connection.cursor(dictionary=True)
 
-            # 특정 measure_date의 기존 measure 값을 가져오기
-            select_query = "SELECT measure FROM bloodsugar WHERE user_no = %s AND measure_date = %s"
-            cursor.execute(select_query, (user_no, measure_date))
-            result = cursor.fetchone()
+            update_query = """
+            UPDATE bloodsugar 
+            SET measure = %s
+            WHERE user_no = %s AND measure_date = %s
+            """
+            update_data = (new_measure,user_no,measure_date)
 
-            if result is None:
-                return False, "No record found for the given user_no and measure_date"
-
-            current_measures = result['measure'].split(',')
-            if len(current_measures) != 6:
-                return False
-
-            # 새로운 measure 값 추가
-            for i in range(6):
-                if current_measures[i] == '-1':
-                    current_measures[i] = str(new_measure)
-                    break
-            if '-1' not in current_measures:
-                return False
-        
-            updated_measures = ','.join(current_measures)
-
-            # measure 값 업데이트
-            update_query = "UPDATE bloodsugar SET measure = %s WHERE user_no = %s AND measure_date = %s"
-            cursor.execute(update_query, (updated_measures, user_no, measure_date))
+            cursor.execute(update_query,update_data)
             connection.commit()
-
-            return True, None
-    except Exception as e:
-        print("MySQL 데이터 업데이트 오류:", e)
-        return False, str(e)
+            
+            print(f'user_no{user_no}의 혈당 업데이트 완료')
+            return True
+    except Error as e:
+        print("MySQL 데이터 삽입 오류:", e)
+        return False
     finally:
         if 'cursor' in locals() and cursor is not None:
             cursor.close()

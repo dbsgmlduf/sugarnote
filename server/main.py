@@ -4,7 +4,7 @@ from mysql.connector import Error
 from bloodsugar_insert import insert_bloodsugar,update_bloodsugar_measure
 from bloodsugar_get import get_bloodsugar
 from user_insert import insert_user
-
+from insulin import get_injection
 
 app = Flask(__name__)
 
@@ -37,7 +37,7 @@ def insert_user_route():
 
 #혈당 테이블 생성
 @app.route('/insert_bloodsugar', methods=['POST'])
-def handle_insert_bloodsugar():
+def insert_bloodsugar_route():
     try:
         data = request.get_json()
         user_no = data['user_no']
@@ -62,10 +62,7 @@ def update_measure_route():
         new_measure = data['new_measure']
         measure_date = data['measure_date']
     
-        success, error = update_bloodsugar_measure(user_no, new_measure, measure_date)
-    
-        if not user_no or not new_measure or not measure_date:
-            return jsonify({"message":'0'})
+        success= update_bloodsugar_measure(user_no, new_measure, measure_date)
 
         if success:
             return jsonify({"message": "1"})
@@ -94,6 +91,33 @@ def get_bloodsugar_route():
         return jsonify(response)
     else:
         return jsonify({'message': '0'})
+    
 
+    #인슐린 투약 테이블 생성
+@app.route('/get_injection', methods=['POST'])
+def get_injection_route():
+    data = request.get_json()
+    user_no = data['user_no']
+    measure_date = data['measure_date']
+
+    if not user_no or not measure_date:
+        return jsonify({'message': 'user_no와 measure_date를 제공해야 합니다.'})
+
+    injection_data = get_injection(user_no, measure_date)
+
+    if injection_data:
+        response = {
+            'message':'1',
+            'user_no': injection_data['user_no'],
+            'measure_date': injection_data['measure_date'],
+            'blood_sugar': injection_data['measure'],
+        }
+        return jsonify(response)
+    else:
+        return jsonify({'message': '0'})
+    
+    
 if __name__ == '__main__':
     app.run(debug=True)
+
+
