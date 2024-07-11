@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class InjectionDataPage extends StatefulWidget {
   @override
@@ -9,6 +11,12 @@ class InjectionDataPage extends StatefulWidget {
 class _InjectionDataPageState extends State<InjectionDataPage> {
   DateTime selectedDate = DateTime.now();
   Map<int, bool> injectionData = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchInjectionData(); // 앱이 시작될 때 데이터 가져오기
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +39,7 @@ class _InjectionDataPageState extends State<InjectionDataPage> {
                 crossAxisSpacing: 4.0,
                 mainAxisSpacing: 4.0,
               ),
-              itemCount: 32,
+              itemCount: 31,
               itemBuilder: (context, index) {
                 return CircleAvatar(
                   radius: 14,
@@ -59,9 +67,45 @@ class _InjectionDataPageState extends State<InjectionDataPage> {
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
-        // 여기에 실제 데이터 로직을 추가하십시오.
-        injectionData = {};
+        _fetchInjectionData(); // 데이터 가져오기
       });
+    }
+  }
+
+  Future<void> _fetchInjectionData() async {
+    final user_no = 3; // 임시로 저장된 사용자 번호
+    final measure_date = DateFormat('yyyy-MM-01').format(selectedDate); // 월의 첫날을 사용
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:5000/get_injection'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'user_no': user_no,
+          'measure_date': measure_date,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['message'] == '1') {
+          final injectionValues = data['blood_sugar'].split(',');
+          setState(() {
+            injectionData = {
+              for (int i = 0; i < injectionValues.length; i++)
+                i + 1: injectionValues[i] != '0'
+            };
+          });
+        } else {
+          print('Failed to fetch injection data: ${data['message']}');
+        }
+      } else {
+        print('Failed to fetch injection data. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching injection data: $e');
     }
   }
 }
