@@ -51,15 +51,11 @@ def add_exercise(user_no, exercise, exercise_time,measure_date):
             cursor.execute(insert_query, insert_data)
             connection.commit()
 
-            # Calculate sum_kcal for the user
-            sum_kcal = get_sum_kcal(user_no,measure_date)
-
             return {
                 "user_no": user_no,
                 "exercise": exercise,
                 "exercise_time": exercise_time,
                 "kcal": kcal,
-                "sum_kcal": sum_kcal,
                 "measure_date" : measure_date
             }, 201
 
@@ -98,6 +94,51 @@ def get_sum_kcal(user_no,measure_date):
     except Error as e:
         print("MySQL 데이터 처리 오류:", e)
         return None
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'connection' in locals() and connection.is_connected():
+            connection.close()
+
+
+
+def get_exercise(user_no, measure_date):
+    try:
+        connection = get_db_connection()
+        if connection is not None:
+            cursor = connection.cursor(dictionary=True)
+
+            exercise_query = """
+            SELECT exercise, exercise_time, kcal
+            FROM Exercise
+            WHERE user_no = %s AND measure_date = %s
+            """
+            cursor.execute(exercise_query, (user_no, measure_date))
+            exercise_results = cursor.fetchall()
+
+            if not exercise_results:
+                return {"error": "No exercise records found for the user on the specified date"}, None
+            total_kcal = get_sum_kcal(user_no,measure_date)
+
+            # Prepare response data
+            exercise_details = []
+            for result in exercise_results:
+                exercise_details.append({
+                    "exercise": result['exercise'],
+                    "exercise_time": result['exercise_time'],
+                    "kcal": result['kcal']
+                })
+
+            return {
+                "user_no": user_no,
+                "measure_date": measure_date,
+                "exercise_details": exercise_details,
+                "total_kcal": total_kcal
+            }
+
+    except Error as e:
+        print("MySQL 데이터 처리 오류:", e)
+        return {"error": "Database error"}, None
     finally:
         if 'cursor' in locals() and cursor is not None:
             cursor.close()

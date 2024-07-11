@@ -25,7 +25,6 @@ def get_injection(user_no, measure_date):
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # measure_date를 yyyy-mm 형식으로 포맷팅
         formatted_measure_date = datetime.datetime.strptime(measure_date, '%Y-%m-%d').date().strftime('%Y-%m')
 
         select_query = """
@@ -67,12 +66,14 @@ def update_injection(user_no, new_measure, measure_date):
         if connection is not None:
             cursor = connection.cursor(dictionary=True)
 
+            formatted_measure_date = datetime.datetime.strptime(measure_date, '%Y-%m-%d').date()
+            
             update_query = """
             UPDATE INJECTION 
-            SET measure = %s
-            WHERE user_no = %s AND measure_date = %s
+            SET measure = %s, measure_date = %s
+            WHERE user_no = %s AND DATE_FORMAT(measure_date, '%Y-%m') = %s
             """
-            cursor.execute(update_query, (new_measure, user_no, measure_date))
+            cursor.execute(update_query, (new_measure, formatted_measure_date, user_no, formatted_measure_date.strftime('%Y-%m')))
             connection.commit()
             
             print(f'user_no {user_no}의 인슐린 투약 업데이트 완료')

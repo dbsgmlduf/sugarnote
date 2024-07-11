@@ -5,7 +5,7 @@ from bloodsugar_insert import update_bloodsugar_measure
 from bloodsugar_get import get_bloodsugar
 from user_insert import insert_user
 from insulin import get_injection,update_injection
-from mets_function import add_exercise
+from mets_function import add_exercise,get_exercise
 
 app = Flask(__name__)
 
@@ -94,7 +94,7 @@ def get_injection_route():
             'message':'1',
             'user_no': injection_data['user_no'],
             'measure_date': injection_data['measure_date'],
-            'blood_sugar': injection_data['measure'],
+            'injection': injection_data['measure'],
         }
         return jsonify(response)
     else:
@@ -108,13 +108,21 @@ def update_injection_route():
         new_measure = data['new_measure']
         measure_date = data['measure_date']
     
-        success= update_injection(user_no, new_measure, measure_date)
+        success = update_injection(user_no, new_measure, measure_date)
 
         if success:
-            return jsonify({"message": "1"})
+            response = {
+                'message': '1',
+                'user_no': user_no,
+                'measure_date': measure_date,
+                'new_measure': new_measure,
+            }
+            return jsonify(response)
+        else:
+            return jsonify({'message': '0'})
          
     except Exception as error:
-        return jsonify({'message': '0'})
+        return jsonify({'message': '0', 'error_message': str(error)})
     
 #운동량 계산 후 기입    
 @app.route('/add_exercise', methods=['POST'])
@@ -132,7 +140,26 @@ def add_exercise_route():
     except Exception as error:
         return jsonify({'message': '0'})
     
+@app.route('/get_exercise', methods=['POST'])
+def get_exercise_route():
+    try:
+        data = request.json
+        user_no = data.get('user_no')
+        measure_date = data.get('measure_date')
+
+        if not user_no or not measure_date:
+            return jsonify({"error": "user_no and measure_date parameters are required"}), 400
+
+        exercise_details = get_exercise(user_no,measure_date)
+
+        if exercise_details:
+            return jsonify({'message' : '1'},exercise_details)
+
+        return jsonify({'message':'0'})
+    except Exception as error:
+        return jsonify({'message': '0'})
+
+
+
 if __name__ == '__main__':
     app.run(debug=True)
-
-
