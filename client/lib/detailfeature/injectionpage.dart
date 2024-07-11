@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class InjectionPage extends StatefulWidget {
   @override
@@ -16,7 +18,47 @@ class _InjectionPageState extends State<InjectionPage> {
   void initState() {
     super.initState();
     _loadButtonStates();
+    _fetchInjectionData(); // 데이터를 불러오는 함수 호출
     _checkForMonthChange();
+  }
+
+  Future<void> _fetchInjectionData() async {
+    final user_no = 4; // 가상의 사용자 번호
+    final measure_date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:5000/get_injection'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'user_no': user_no,
+          'measure_date': measure_date,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['message'] == '1') {
+          final injectionValues = data['blood_sugar'].split(',');
+          setState(() {
+            buttonStates = {
+              for (int i = 1; i <= injectionValues.length; i++)
+                i: injectionValues[i - 1] == '1'
+            };
+            isInjectionCompletedToday = injectionValues[DateTime.now().day - 1] == '1';
+          });
+          print('Injection data fetched and set: $buttonStates');
+        } else {
+          print('Failed to fetch injection data: ${data['message']}');
+        }
+      } else {
+        print('Failed to fetch injection data. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching injection data: $e');
+    }
   }
 
   _checkForMonthChange() async {
@@ -66,28 +108,54 @@ class _InjectionPageState extends State<InjectionPage> {
     return map.entries.map((e) => '${e.key}:${e.value}').join(',');
   }
 
-  _handleInjectionComplete() {
+  Future<void> _handleInjectionComplete() async {
+    final user_no = 4; // 가상의 사용자 번호
+    final measure_date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
     setState(() {
-      bool allCompleted = true;
-      for (int i = 1; i <= 32; i++) {
-        if (buttonStates[i] != true) {
-          buttonStates[i] = true;
-          allCompleted = false;
-          break;
-        }
-      }
-      if (allCompleted) {
-        buttonStates.clear();
-      }
-      lastInjectionDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      int today = DateTime.now().day;
+      buttonStates[today] = true;
       isInjectionCompletedToday = true;
     });
+
     _saveButtonStates();
+
+    // 서버로 데이터 전송
+    List<String> measureList = List.generate(31, (index) {
+      return buttonStates[index + 1] == true ? '1' : '0';
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:5000/update_injection'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'user_no': user_no,
+          'measure_date': measure_date,
+          'new_measure': measureList.join(','),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['message'] == '1') {
+          print('Injection data updated successfully.');
+        } else {
+          print('Failed to update injection data: ${data['message']}');
+        }
+      } else {
+        print('Failed to update injection data. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error updating injection data: $e');
+    }
   }
 
   bool _canCompleteInjectionToday() {
-    final todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    return lastInjectionDate != todayDate && !isInjectionCompletedToday;
+    int todayIndex = DateTime.now().day;
+    return buttonStates[todayIndex] == false;
   }
 
   @override
