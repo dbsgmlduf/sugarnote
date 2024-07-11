@@ -20,7 +20,6 @@ def get_db_connection():
         print("MySQL 연결 오류:", e)
         return None
 
-# 데이터베이스에서 데이터 조회
 def get_injection(user_no, measure_date):
     try:
         connection = get_db_connection()
@@ -54,6 +53,35 @@ def get_injection(user_no, measure_date):
     except Error as e:
         print("MySQL 데이터 조회 또는 테이블 생성 오류:", e)
         return None
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'connection' in locals() and connection.is_connected():
+            connection.close()
+
+#update insulin
+def update_injection(user_no, new_measure, measure_date):
+    try:
+        connection = get_db_connection()
+        if connection is not None:
+            cursor = connection.cursor(dictionary=True)
+
+            update_query = """
+            UPDATE injection 
+            SET measure = %s
+            WHERE user_no = %s AND measure_date = %s
+            """
+            update_data = (new_measure,user_no,measure_date)
+
+            cursor.execute(update_query,update_data)
+            connection.commit()
+            
+            print(f'user_no{user_no}의 인슐린 투약 업데이트 완료')
+            return True
+        
+    except Error as e:
+        print("MySQL 데이터 삽입 오류:", e)
+        return False
     finally:
         if 'cursor' in locals() and cursor is not None:
             cursor.close()

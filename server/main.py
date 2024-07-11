@@ -1,10 +1,10 @@
 from flask import Flask, request, jsonify, make_response
 import mysql.connector
 from mysql.connector import Error
-from bloodsugar_insert import insert_bloodsugar,update_bloodsugar_measure
+from bloodsugar_insert import update_bloodsugar_measure
 from bloodsugar_get import get_bloodsugar
 from user_insert import insert_user
-from insulin import get_injection
+from insulin import get_injection,update_injection
 
 app = Flask(__name__)
 
@@ -34,24 +34,6 @@ def insert_user_route():
         
     except Exception as error:
         return jsonify({'message': '0'})
-
-#혈당 테이블 생성
-@app.route('/insert_bloodsugar', methods=['POST'])
-def insert_bloodsugar_route():
-    try:
-        data = request.get_json()
-        user_no = data['user_no']
-        measure_date = data['measure_date']
-        measure = data['measure']
-
-        success = insert_bloodsugar(user_no,measure_date,measure)
-        if success:
-            return jsonify({'message': '1'})
-        
-    except Exception as error:
-        return jsonify({'message': '0'})
-    
-
     
 #혈당 데이터 업데이트
 @app.route('/update_bloodsugar', methods=['POST'])
@@ -116,7 +98,23 @@ def get_injection_route():
     else:
         return jsonify({'message': '0'})
     
+@app.route('/update_injection', methods=['POST'])
+def update_injection_route():
+    try:
+        data = request.json
+        user_no = data['user_no']
+        new_measure = data['new_measure']
+        measure_date = data['measure_date']
     
+        success= update_injection(user_no, new_measure, measure_date)
+
+        if success:
+            return jsonify({"message": "1"})
+         
+    except Exception as error:
+        return jsonify({'message': '0'})
+    
+
 if __name__ == '__main__':
     app.run(debug=True)
 
