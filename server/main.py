@@ -78,6 +78,7 @@ def get_bloodsugar_route():
 
     #인슐린 투약 테이블 생성
 @app.route('/get_injection', methods=['POST'])
+    
 def get_injection_route():
     data = request.get_json()
     user_no = data['user_no']
