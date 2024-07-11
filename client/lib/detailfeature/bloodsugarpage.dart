@@ -28,7 +28,7 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
   }
 
   Future<void> _fetchBloodSugarData() async {
-    final user_no = 1; // 임시로 저장된 사용자 번호
+    final user_no = 4; // 임시로 저장된 사용자 번호
     final measure_date = DateFormat('yyyy-MM-dd').format(today);
 
     try {
@@ -69,8 +69,21 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
   }
 
   Future<void> _submitBloodSugarData(String time, int value) async {
-    final user_no = 1; // 임시로 저장된 사용자 번호
+    final user_no = 4; // 임시로 저장된 사용자 번호
     final measure_date = DateFormat('yyyy-MM-dd').format(today);
+
+    // 업데이트된 혈당 데이터를 준비합니다.
+    Map<String, String> updatedBloodSugarData = Map.from(bloodSugarData.map((key, value) => MapEntry(key, value ?? '-1')));
+    updatedBloodSugarData[time] = value.toString();
+
+    List<String> bloodSugarValues = [
+      updatedBloodSugarData['아침공복'] ?? '-1',
+      updatedBloodSugarData['아침식후'] ?? '-1',
+      updatedBloodSugarData['점심식전'] ?? '-1',
+      updatedBloodSugarData['점심식후'] ?? '-1',
+      updatedBloodSugarData['저녁식전'] ?? '-1',
+      updatedBloodSugarData['취침전'] ?? '-1',
+    ];
 
     try {
       final response = await http.post(
@@ -80,8 +93,8 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
         },
         body: jsonEncode(<String, dynamic>{
           'user_no': user_no,
-          'new_measure': value,
           'measure_date': measure_date,
+          'new_measure': bloodSugarValues.join(','),
         }),
       );
 
