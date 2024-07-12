@@ -25,6 +25,13 @@ def insert_user(name,age,height, weight,ID,PW):
         if connection is not None:
             cursor = connection.cursor()
 
+            check_query = "SELECT COUNT(*) FROM user WHERE ID = %s"
+            cursor.execute(check_query, (ID,))
+            count = cursor.fetchone()[0]
+            
+            if count > 0:
+                return "EXIST"
+            
             # userinfo 테이블에 데이터 삽입
             insert_query = """
             INSERT INTO user (name,age,height, weight,ID,PW)
@@ -45,3 +52,31 @@ def insert_user(name,age,height, weight,ID,PW):
         if 'connection' in locals() and connection.is_connected():
             connection.close()
 
+
+
+def get_user(ID, PW):
+    try:
+        connection = get_db_connection()
+        if connection is not None:
+            cursor = connection.cursor(dictionary=True)
+
+            select_query = """
+            SELECT * FROM user
+            WHERE ID = %s AND PW = %s
+            """
+            cursor.execute(select_query, (ID, PW))
+            user = cursor.fetchone()
+
+            if user:
+                return True, user
+            else:
+                return False
+            
+    except Error as e:
+        print("MySQL 데이터 조회 오류:", e)
+        return False, "MySQL 데이터 조회 오류"
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'connection' in locals() and connection.is_connected():
+            connection.close()
