@@ -3,7 +3,7 @@ import mysql.connector
 from mysql.connector import Error
 from bloodsugar_insert import update_bloodsugar_measure
 from bloodsugar_get import get_bloodsugar
-from user_insert import insert_user
+from user_insert import insert_user,get_user
 from insulin import get_injection,update_injection
 from mets_function import add_exercise,get_exercise
 
@@ -28,10 +28,32 @@ def insert_user_route():
         ID = data['ID']
         PW = data['PW']
 
-        success = insert_user(name,age,height, weight,ID,PW)
+        result = insert_user(name, age, height, weight, ID, PW)
+
+        if result == True:
+            return jsonify({'message': '1'})
+        elif result == "EXIST":
+            return jsonify({'message': '2'})
+        else:
+            return jsonify({'message': '0'})
+        
+    except Exception as error:
+        return jsonify({'message': '0'})
+    
+#로그인
+@app.route('/get_user', methods=['POST'])
+def get_user_route():
+    try:
+        data = request.get_json()
+        ID = data['ID']
+        PW = data['PW']
+
+        success, result = get_user(ID, PW)
 
         if success:
-            return jsonify({'message': '1'})
+            return jsonify({'message': '1', 'user': result})
+        else:
+            return jsonify({'message': '0'})
         
     except Exception as error:
         return jsonify({'message': '0'})
