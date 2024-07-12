@@ -6,13 +6,13 @@ class LoginOrSignup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.lightBlue,
+      backgroundColor: Colors.grey,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              '환영합니다!',
+              '오늘의 당',
               style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             SizedBox(height: 20),
@@ -23,7 +23,7 @@ class LoginOrSignup extends StatelessWidget {
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
               },
-              child: Text('로그인', style: TextStyle(color: Colors.blue)),
+              child: Text('로그인', style: TextStyle(color: Colors.black)),
             ),
             SizedBox(height: 10),
             ElevatedButton(
@@ -33,7 +33,7 @@ class LoginOrSignup extends StatelessWidget {
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => SignupPage()));
               },
-              child: Text('회원가입', style: TextStyle(color: Colors.blue)),
+              child: Text('회원가입', style: TextStyle(color: Colors.black)),
             ),
           ],
         ),
