@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:client/shared_preferences_helper.dart'; // SharedPreferencesHelper 임포트
+
 class InjectionDataPage extends StatefulWidget {
   @override
   _InjectionDataPageState createState() => _InjectionDataPageState();
@@ -67,14 +69,14 @@ class _InjectionDataPageState extends State<InjectionDataPage> {
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
-        _fetchInjectionData(); // 데이터 가져오기
+        _fetchInjectionData();
       });
     }
   }
 
   Future<void> _fetchInjectionData() async {
-    final user_no = 3; // 임시로 저장된 사용자 번호
-    final measure_date = DateFormat('yyyy-MM-01').format(selectedDate); // 월의 첫날을 사용
+    final user_no = await SharedPreferencesHelper.getUserNo();
+    final measure_date = DateFormat('yyyy-MM-01').format(selectedDate);
 
     try {
       final response = await http.post(
@@ -91,7 +93,7 @@ class _InjectionDataPageState extends State<InjectionDataPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['message'] == '1') {
-          final injectionValues = data['blood_sugar'].split(',');
+          final injectionValues = data['injection'].split(',');
           setState(() {
             injectionData = {
               for (int i = 0; i < injectionValues.length; i++)
