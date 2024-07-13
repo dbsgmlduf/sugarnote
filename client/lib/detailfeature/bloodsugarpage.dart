@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:client/shared_preferences_helper.dart';
 
 class BloodSugarPage extends StatefulWidget {
   @override
@@ -10,7 +11,7 @@ class BloodSugarPage extends StatefulWidget {
 
 class _BloodSugarPageState extends State<BloodSugarPage> {
   DateTime today = DateTime.now();
-
+  int userNo = 0;
   // 더미 데이터
   Map<String, String?> bloodSugarData = {
     '아침공복': null,
@@ -24,13 +25,16 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
   @override
   void initState() {
     super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    userNo = await SharedPreferencesHelper.getUserNo() ?? 0;
     _fetchBloodSugarData();
   }
 
   Future<void> _fetchBloodSugarData() async {
-    final user_no = 4; // 임시로 저장된 사용자 번호
     final measure_date = DateFormat('yyyy-MM-dd').format(today);
-
     try {
       final response = await http.post(
         Uri.parse('http://10.0.2.2:5000/get_bloodsugar'),
@@ -38,7 +42,7 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode(<String, dynamic>{
-          'user_no': user_no,
+          'user_no': userNo,
           'measure_date': measure_date,
         }),
       );
@@ -69,7 +73,6 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
   }
 
   Future<void> _submitBloodSugarData(String time, int value) async {
-    final user_no = 4; // 임시로 저장된 사용자 번호
     final measure_date = DateFormat('yyyy-MM-dd').format(today);
 
     // 업데이트된 혈당 데이터를 준비합니다.
@@ -92,7 +95,7 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode(<String, dynamic>{
-          'user_no': user_no,
+          'user_no': userNo,
           'measure_date': measure_date,
           'new_measure': bloodSugarValues.join(','),
         }),
