@@ -1,12 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:client/shared_preferences_helper.dart';
 
 import '../history/pastdatapage.dart';
 import '../mainPages/login_or_signup.dart';
 
-class SettingScreen extends StatelessWidget {
-  final String userName = '사용자 이름'; // 이 부분은 추후 DB와 연결하여 사용자 데이터를 가져올 예정입니다.
-  final String userAge = '사용자 나이'; // 이 부분은 추후 DB와 연결하여 사용자 데이터를 가져올 예정입니다.
+class SettingScreen extends StatefulWidget {
+  @override
+  _SettingScreenState createState() => _SettingScreenState();
+}
+
+class _SettingScreenState extends State<SettingScreen> {
+  String userName = '사용자 이름';
+  String userAge = '사용자 나이';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final name = await SharedPreferencesHelper.getUserName();
+    final age = await SharedPreferencesHelper.getUserAge();
+    setState(() {
+      userName = name ?? '사용자 이름';
+      userAge = age != null ? '$age세' : '사용자 나이';
+    });
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    await SharedPreferencesHelper.clearAll();
+    Get.offAll(LoginOrSignup());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,9 +98,7 @@ class SettingScreen extends StatelessWidget {
         backgroundColor: Colors.grey, // 로그아웃 버튼 배경색 설정
         padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
       ),
-      onPressed: () {
-        Get.offAll(LoginOrSignup()); // 로그인/회원가입 페이지로 이동
-      },
+      onPressed: () => _logout(context),
       child: Text(
         '로그아웃',
         style: TextStyle(fontSize: 18, color: Colors.white),
