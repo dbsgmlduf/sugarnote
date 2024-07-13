@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:client/shared_preferences_helper.dart'; // SharedPreferencesHelper 임포트
+
 class BloodSugarPage extends StatefulWidget {
   @override
   _BloodSugarPageState createState() => _BloodSugarPageState();
@@ -35,7 +37,7 @@ class _BloodSugarPageState extends State<BloodSugarPage> {
   }
 
   Future<void> _fetchBloodSugarData() async {
-    final user_no = 1; // 임시로 저장된 사용자 번호
+    final user_no = await SharedPreferencesHelper.getUserNo(); // SharedPreferences에서 user_no 가져오기
     final measure_date = DateFormat('yyyy-MM-dd').format(selectedDate);
 
     try {
