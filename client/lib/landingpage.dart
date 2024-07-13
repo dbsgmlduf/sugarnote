@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:client/mainpage.dart';
 import 'package:client/mainPages/login_or_signup.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -15,7 +14,7 @@ class _LandingPageState extends State<Landingpage>{
   void initState(){
     Timer(Duration(seconds: 3),(){
       //Get.offAll(LoginOrSignup());
-      Get.offAll(Mainpage());
+      Get.offAll(LoginOrSignup());
     });
     super.initState();
   }
