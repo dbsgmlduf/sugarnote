@@ -3,8 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'package:client/shared_preferences_helper.dart'; // SharedPreferencesHelper 임포트
-
 class InjectionDataPage extends StatefulWidget {
   @override
   _InjectionDataPageState createState() => _InjectionDataPageState();
@@ -13,6 +11,8 @@ class InjectionDataPage extends StatefulWidget {
 class _InjectionDataPageState extends State<InjectionDataPage> {
   DateTime selectedDate = DateTime.now();
   Map<int, bool> injectionData = {};
+  int selectedYear = DateTime.now().year;
+  int selectedMonth = DateTime.now().month;
 
   @override
   void initState() {
@@ -29,7 +29,7 @@ class _InjectionDataPageState extends State<InjectionDataPage> {
           SizedBox(height: 20),
           ListTile(
             title: Text("Select year and month"),
-            subtitle: Text(DateFormat.yMMMM().format(selectedDate)),
+            subtitle: Text(DateFormat.yMMMM().format(DateTime(selectedYear, selectedMonth))),
             trailing: Icon(Icons.edit),
             onTap: _pickDate,
           ),
@@ -57,26 +57,81 @@ class _InjectionDataPageState extends State<InjectionDataPage> {
   }
 
   Future<void> _pickDate() async {
-    DateTime? picked = await showDatePicker(
+    final picked = await showDialog<List<int>>(
       context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-      builder: (BuildContext context, Widget? child) {
-        return child ?? Text('No date selected');
+      builder: (BuildContext context) {
+        int tempYear = selectedYear;
+        int tempMonth = selectedMonth;
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: Text("Select year and month"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButton<int>(
+                    value: tempYear,
+                    items: List.generate(101, (index) => 2020 + index).map((year) {
+                      return DropdownMenuItem(
+                        value: year,
+                        child: Text(year.toString()),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        tempYear = value!;
+                      });
+                    },
+                  ),
+                  DropdownButton<int>(
+                    value: tempMonth,
+                    items: List.generate(12, (index) => index + 1).map((month) {
+                      return DropdownMenuItem(
+                        value: month,
+                        child: Text(month.toString()),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        tempMonth = value!;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context).pop([tempYear, tempMonth]);
+                  },
+                ),
+              ],
+            );
+          },
+        );
       },
     );
-    if (picked != null && picked != selectedDate) {
+
+    if (picked != null && picked is List<int> && picked.length == 2) {
       setState(() {
-        selectedDate = picked;
-        _fetchInjectionData();
+        selectedYear = picked[0];
+        selectedMonth = picked[1];
+        selectedDate = DateTime(selectedYear, selectedMonth);
+        _fetchInjectionData(); // 데이터 가져오기
       });
     }
   }
 
   Future<void> _fetchInjectionData() async {
-    final user_no = await SharedPreferencesHelper.getUserNo();
-    final measure_date = DateFormat('yyyy-MM-01').format(selectedDate);
+    final user_no = 3; // 임시로 저장된 사용자 번호
+    final measure_date = DateFormat('yyyy-MM-15').format(DateTime(selectedYear, selectedMonth)); // YYYY-MM-15 형식
 
     try {
       final response = await http.post(
