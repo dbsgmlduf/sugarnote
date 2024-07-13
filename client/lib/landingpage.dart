@@ -9,29 +9,46 @@ class Landingpage extends StatefulWidget {
   _LandingPageState createState() => _LandingPageState();
 }
 
-class _LandingPageState extends State<Landingpage>{
+class _LandingPageState extends State<Landingpage> {
   @override
-  void initState(){
-    Timer(Duration(seconds: 3),(){
+  void initState() {
+    Timer(Duration(seconds: 3), () {
       //Get.offAll(LoginOrSignup());
       Get.offAll(LoginOrSignup());
     });
     super.initState();
   }
+
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         alignment: Alignment.center,
         children: [
-          Container(color: Colors.orange[100],
-            child: Center(child: Text('오늘의 당')),
+          Container(
+            color: Colors.orange[100],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/image/logo.png',
+                  width: 500, // 로고의 너비를 설정합니다.
+                  height: 500, // 로고의 높이를 설정합니다.
+                ),
+                SizedBox(height: 20),
+                Text(
+                  '오늘의 당',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
           ),
-          CircularProgressIndicator()
-        ]
-
+          Positioned(
+            bottom: 30,
+            child: CircularProgressIndicator(),
+          ),
+        ],
       ),
-
     );
   }
 }

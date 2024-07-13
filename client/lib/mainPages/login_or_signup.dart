@@ -11,24 +11,32 @@ class LoginOrSignup extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Image.asset(
+              'assets/image/logo.png',
+              width: 100,
+              height: 100,
+            ),
+            SizedBox(height: 20),
             Text(
               '오늘의 당',
               style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 10),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
               },
               child: Text('로그인', style: TextStyle(color: Colors.black)),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => SignupPage()));
