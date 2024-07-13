@@ -1,8 +1,9 @@
+import 'package:client/mainpage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'homescreen.dart';
+import 'package:get/get.dart';
 
 class LoginPage extends StatelessWidget {
   final TextEditingController _idController = TextEditingController();
@@ -30,22 +31,16 @@ class LoginPage extends StatelessWidget {
         print("로그인 성공: $data");
         final user = data['user'];
         final userNo = user['user_no'];
+        final userAge = user['age'];
         final userName = user['name'];
 
         // SharedPreferences에 사용자 정보 저장
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setInt('user_no', userNo);
         await prefs.setString('user_name', userName);
+        await prefs.setInt('user_age', userAge);
 
-        // SharedPreferences에서 사용자 정보 읽기 (디버깅용)
-        final storedUserNo = prefs.getInt('user_no');
-        final storedUserName = prefs.getString('user_name');
-        print("SharedPreferences에 저장된 사용자 정보: user_no: $storedUserNo, user_name: $storedUserName");
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => Homescreen()),
-        );
+        Get.offAll(Mainpage());
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('로그인 실패')));
         print("로그인 실패: ${data['message']}");

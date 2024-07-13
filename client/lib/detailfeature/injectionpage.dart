@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:client/shared_preferences_helper.dart';
 
 class InjectionPage extends StatefulWidget {
   @override
@@ -13,52 +14,19 @@ class _InjectionPageState extends State<InjectionPage> {
   Map<int, bool> buttonStates = {};
   String lastInjectionDate = '';
   bool isInjectionCompletedToday = false;
+  int userNo = 0;
+  List<int> injectionData = List.filled(31, 0); // 데이터를 저장할 리스트
 
   @override
   void initState() {
     super.initState();
-    _loadButtonStates();
-    _fetchInjectionData(); // 데이터를 불러오는 함수 호출
-    _checkForMonthChange();
+    _loadUserData();
   }
 
-  Future<void> _fetchInjectionData() async {
-    final user_no = 4; // 가상의 사용자 번호
-    final measure_date = DateFormat('yyyy-MM-dd').format(DateTime.now());
-
-    try {
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:5000/get_injection'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, dynamic>{
-          'user_no': user_no,
-          'measure_date': measure_date,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['message'] == '1') {
-          final injectionValues = data['blood_sugar'].split(',');
-          setState(() {
-            buttonStates = {
-              for (int i = 1; i <= injectionValues.length; i++)
-                i: injectionValues[i - 1] == '1'
-            };
-            isInjectionCompletedToday = injectionValues[DateTime.now().day - 1] == '1';
-          });
-          print('Injection data fetched and set: $buttonStates');
-        } else {
-          print('Failed to fetch injection data: ${data['message']}');
-        }
-      } else {
-        print('Failed to fetch injection data. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error fetching injection data: $e');
-    }
+  Future<void> _loadUserData() async {
+    userNo = await SharedPreferencesHelper.getUserNo() ?? 0;
+    _loadButtonStates();
+    _checkForMonthChange();
   }
 
   _checkForMonthChange() async {
@@ -82,6 +50,52 @@ class _InjectionPageState extends State<InjectionPage> {
       buttonStates = _stringToMap(prefs.getString('buttonStates') ?? '');
       isInjectionCompletedToday = prefs.getBool('isInjectionCompletedToday') ?? false;
     });
+    _fetchInjectionData();
+  }
+
+  Future<void> _fetchInjectionData() async {
+    final measure_date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:5000/get_injection'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'user_no': userNo,
+          'measure_date': measure_date,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['message'] == '1') {
+          final injectionValues = data['measure'].split(',').map((e) => int.parse(e)).toList();
+          setState(() {
+            injectionData = injectionValues;
+            _updateButtonStates();
+          });
+        } else {
+          print('Failed to fetch injection data: ${data['message']}');
+        }
+      } else {
+        print('Failed to fetch injection data. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching injection data: $e');
+    }
+  }
+
+  void _updateButtonStates() {
+    final today = DateTime.now().day;
+    for (int i = 1; i <= 31; i++) {
+      if (injectionData[i - 1] == 1) {
+        buttonStates[i] = true;
+      } else if (i == today) {
+        buttonStates[i] = false;
+      }
+    }
   }
 
   _saveButtonStates() async {
@@ -108,22 +122,20 @@ class _InjectionPageState extends State<InjectionPage> {
     return map.entries.map((e) => '${e.key}:${e.value}').join(',');
   }
 
-  Future<void> _handleInjectionComplete() async {
-    final user_no = 4; // 가상의 사용자 번호
-    final measure_date = DateFormat('yyyy-MM-dd').format(DateTime.now());
-
+  _handleInjectionComplete() {
     setState(() {
-      int today = DateTime.now().day;
+      final today = DateTime.now().day;
+      injectionData[today - 1] = 1;
       buttonStates[today] = true;
+      lastInjectionDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
       isInjectionCompletedToday = true;
     });
-
     _saveButtonStates();
+    _submitInjectionData();
+  }
 
-    // 서버로 데이터 전송
-    List<String> measureList = List.generate(31, (index) {
-      return buttonStates[index + 1] == true ? '1' : '0';
-    });
+  Future<void> _submitInjectionData() async {
+    final measure_date = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     try {
       final response = await http.post(
@@ -132,30 +144,28 @@ class _InjectionPageState extends State<InjectionPage> {
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode(<String, dynamic>{
-          'user_no': user_no,
+          'user_no': userNo,
           'measure_date': measure_date,
-          'new_measure': measureList.join(','),
+          'new_measure': injectionData.join(','),
         }),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['message'] == '1') {
-          print('Injection data updated successfully.');
-        } else {
-          print('Failed to update injection data: ${data['message']}');
+        if (data['message'] != '1') {
+          print('Failed to submit injection data: ${data['message']}');
         }
       } else {
-        print('Failed to update injection data. Status code: ${response.statusCode}');
+        print('Failed to submit injection data. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error updating injection data: $e');
+      print('Error submitting injection data: $e');
     }
   }
 
   bool _canCompleteInjectionToday() {
-    int todayIndex = DateTime.now().day;
-    return buttonStates[todayIndex] == false;
+    final today = DateTime.now().day;
+    return buttonStates[today] == false || buttonStates[today] == null;
   }
 
   @override
@@ -190,12 +200,12 @@ class _InjectionPageState extends State<InjectionPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(8, (colIndex) {
                           int index = rowIndex * 8 + colIndex + 1;
+                          if (index > 31) return Container();
                           return Container(
                             margin: EdgeInsets.all(2.0), // 간격을 조절
                             child: CircleAvatar(
                               radius: 20, // 크기를 조절
-                              backgroundColor:
-                              buttonStates[index] == true ? Colors.green : Colors.grey,
+                              backgroundColor: buttonStates[index] == true ? Colors.green : Colors.grey,
                               child: Text(
                                 '$index',
                                 style: TextStyle(fontSize: 14), // 텍스트 크기를 조절

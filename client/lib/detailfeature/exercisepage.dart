@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:client/shared_preferences_helper.dart';
 
 class ExercisePage extends StatefulWidget {
   @override
@@ -10,15 +11,20 @@ class ExercisePage extends StatefulWidget {
 class _ExercisePageState extends State<ExercisePage> {
   List<Map<String, dynamic>> exerciseRecords = [];
   int totalCalories = 0;
+  int userNo = 0;
 
   @override
   void initState() {
     super.initState();
-    _fetchExerciseData(); // 앱이 시작될 때 데이터 가져오기
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    userNo = await SharedPreferencesHelper.getUserNo() ?? 0;
+    _fetchExerciseData();
   }
 
   Future<void> _fetchExerciseData() async {
-    final user_no = 4; // 임시로 저장된 사용자 번호
     final measure_date = DateTime.now().toIso8601String().split('T')[0]; // 오늘 날짜
 
     try {
@@ -28,7 +34,7 @@ class _ExercisePageState extends State<ExercisePage> {
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode(<String, dynamic>{
-          'user_no': user_no,
+          'user_no': userNo,
           'measure_date': measure_date,
         }),
       );
@@ -52,7 +58,6 @@ class _ExercisePageState extends State<ExercisePage> {
   }
 
   Future<void> _addExerciseRecord(String exercise, int exerciseTime) async {
-    final user_no = 4; // 임시로 저장된 사용자 번호
     final measure_date = DateTime.now().toIso8601String().split('T')[0]; // 오늘 날짜
 
     try {
@@ -62,7 +67,7 @@ class _ExercisePageState extends State<ExercisePage> {
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode(<String, dynamic>{
-          'user_no': user_no,
+          'user_no': userNo,
           'exercise': exercise,
           'exercise_time': exerciseTime,
           'measure_date': measure_date,
