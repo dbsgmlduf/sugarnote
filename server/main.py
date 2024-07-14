@@ -180,6 +180,29 @@ def get_exercise_route():
         return jsonify({'message':'0'})
     except Exception as error:
         return jsonify({'message': '0'})
+    
+
+#진단
+@app.route('/diagnosis', methods=['POST'])
+def diagnosis_route():
+    try:
+        data = request.json
+        user_no = data.get('user_no')
+        measure_date = data.get('measure_date')
+
+        if user_no or measure_date is None:
+            return jsonify({"error": "측정일자를 다시 선택해주세요"})
+    
+        diagnosis_result, error_message = diagnosis_route(user_no,measure_date)
+
+        if error_message:
+            return jsonify({"error": error_message}), 500
+
+        return jsonify({"diagnosis": diagnosis_result}), 200
+    except Exception as error:
+        return jsonify({'message': '0'})
+    
+
 
 
 

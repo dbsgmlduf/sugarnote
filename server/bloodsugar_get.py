@@ -23,7 +23,7 @@ def get_db_connection():
 # 데이터베이스에서 데이터 조회
 def get_bloodsugar(user_no, measure_date):
     try:
-        connection = get_db_connection()
+        connection = get_dbconnection()
         if connection is not None:
             cursor = connection.cursor(dictionary=True)
 
