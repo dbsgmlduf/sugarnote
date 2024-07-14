@@ -1,4 +1,4 @@
-import 'package:client/mainPages/communityscreen.dart';
+import 'package:client/mainPages/counselingpage.dart';
 import 'package:client/mainPages/homescreen.dart';
 import 'package:client/mainPages/settingscreen.dart';
 
@@ -16,7 +16,7 @@ class _MainPageState extends State<Mainpage>{
         icon: Icon(Icons.home)
     ),
     BottomNavigationBarItem(
-        label: '커뮤니티',
+        label: '상담',
         icon: Icon(Icons.people)
     ),
     BottomNavigationBarItem(
@@ -26,7 +26,7 @@ class _MainPageState extends State<Mainpage>{
   ];
   List pages =[
     Homescreen(),
-    Communityscreen(),
+    CounselingPage(),
     SettingScreen(),
   ];
   @override
