@@ -6,7 +6,7 @@ from bloodsugar_get import get_bloodsugar
 from user_insert import insert_user,get_user
 from insulin import get_injection,update_injection
 from mets_function import add_exercise,get_exercise
-
+from gpt_answer import counseling
 app = Flask(__name__)
 
 @app.route('/test') 
@@ -182,28 +182,23 @@ def get_exercise_route():
         return jsonify({'message': '0'})
     
 
-#진단
-@app.route('/diagnosis', methods=['POST'])
-def diagnosis_route():
-    try:
+# 건강 진단 API 엔드포인트
+@app.route('/counseling', methods=['POST'])
+def counseling_route():
+    try: 
         data = request.json
         user_no = data.get('user_no')
         measure_date = data.get('measure_date')
+        counsel = data.get('counsel')
 
-        if user_no or measure_date is None:
-            return jsonify({"error": "측정일자를 다시 선택해주세요"})
-    
-        diagnosis_result, error_message = diagnosis_route(user_no,measure_date)
+    # 상담 기능 함수 호출
+        result, status_code = counseling(user_no, measure_date, counsel)
 
-        if error_message:
-            return jsonify({"error": error_message}), 500
+    # 결과 반환
+        return jsonify(result), status_code
 
-        return jsonify({"diagnosis": diagnosis_result}), 200
     except Exception as error:
         return jsonify({'message': '0'})
-    
-
-
 
 
 if __name__ == '__main__':
