@@ -17,14 +17,7 @@ def get_db_connection():
     except Error as e:
         print("MySQL 연결 오류:", e)
         return None
-    
-# METS 값을 하드코딩한 딕셔너리
-METS_VALUES = {
-    'running': 9.8,
-    'swimming': 7.9,
-    'cycling': 7.5,
-    'walking': 3.8,
-    # 추가할 운동과 그에 따른 METS 값을 여기에 추가하세요.
+ 
 }
 def add_exercise(user_no, exercise, exercise_time, measure_date):
     try:
