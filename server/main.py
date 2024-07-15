@@ -189,16 +189,16 @@ def counseling_route():
         data = request.json
         user_no = data.get('user_no')
         measure_date = data.get('measure_date')
-        counsel = data.get('counsel')
+        #counsel = data.get('counsel')
 
     # 상담 기능 함수 호출
-        result, status_code = counseling(user_no, measure_date, counsel)
+        response = counseling(user_no, measure_date)
 
     # 결과 반환
-        return jsonify(result), status_code
+        return jsonify(response)
 
     except Exception as error:
-        return jsonify({'message': '0'})
+        return jsonify({'error': str(error)}), 500
 
 
 if __name__ == '__main__':
