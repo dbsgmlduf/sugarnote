@@ -194,12 +194,14 @@ def counseling_route():
     # 상담 기능 함수 호출
         response = counseling(user_no, measure_date)
 
-    # 결과 반환
+        # 결과 반환
+        if not response:
+            return jsonify({'error': '2'}), 808
+
         return jsonify(response)
 
     except Exception as error:
         return jsonify({'error': str(error)}), 500
-
 
 if __name__ == '__main__':
     app.run(debug=True)
