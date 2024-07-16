@@ -67,7 +67,6 @@ class _InjectionPageState extends State<InjectionPage> {
           'measure_date': measure_date,
         }),
       );
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['message'] == '1') {

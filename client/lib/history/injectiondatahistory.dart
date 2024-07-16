@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:client/shared_preferences_helper.dart'; // SharedPreferencesHelper import
+
 class InjectionDataPage extends StatefulWidget {
   @override
   _InjectionDataPageState createState() => _InjectionDataPageState();
@@ -13,11 +15,17 @@ class _InjectionDataPageState extends State<InjectionDataPage> {
   Map<int, bool> injectionData = {};
   int selectedYear = DateTime.now().year;
   int selectedMonth = DateTime.now().month;
+  int userNo = 0; // 사용자 번호 저장
 
   @override
   void initState() {
     super.initState();
-    _fetchInjectionData(); // 앱이 시작될 때 데이터 가져오기
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    userNo = await SharedPreferencesHelper.getUserNo() ?? 0;
+    _fetchInjectionData(); // 사용자 번호를 가져온 후 데이터를 가져오기
   }
 
   @override
@@ -130,8 +138,7 @@ class _InjectionDataPageState extends State<InjectionDataPage> {
   }
 
   Future<void> _fetchInjectionData() async {
-    final user_no = 3; // 임시로 저장된 사용자 번호
-    final measure_date = DateFormat('yyyy-MM-15').format(DateTime(selectedYear, selectedMonth)); // YYYY-MM-15 형식
+    final measure_date = DateFormat('yyyy-MM-dd').format(DateTime(selectedYear, selectedMonth, 1)); // YYYY-MM-01 형식
 
     try {
       final response = await http.post(
@@ -140,7 +147,7 @@ class _InjectionDataPageState extends State<InjectionDataPage> {
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode(<String, dynamic>{
-          'user_no': user_no,
+          'user_no': userNo,
           'measure_date': measure_date,
         }),
       );
