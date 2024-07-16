@@ -54,7 +54,7 @@ def counseling(user_no, measure_date):
             bloodsugar_data = cursor.fetchone()
 
             if not bloodsugar_data:
-                return {'error': '혈당 정보를 찾을 수 없습니다.'}, 404
+                return {}
 
             blood_sugar = bloodsugar_data['measure']
 
@@ -66,7 +66,7 @@ def counseling(user_no, measure_date):
             exercise_data = cursor.fetchone()
 
             if not exercise_data:
-                return {'error': '운동 정보를 찾을 수 없습니다.'}, 404
+                return {}
 
             kcal = exercise_data['Kcal']
 
