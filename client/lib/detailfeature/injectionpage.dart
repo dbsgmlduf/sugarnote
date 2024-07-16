@@ -54,7 +54,7 @@ class _InjectionPageState extends State<InjectionPage> {
   }
 
   Future<void> _fetchInjectionData() async {
-    final measure_date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final measure_date = DateFormat('yyyy-MM-15').format(DateTime.now()); // 임의의 15일 날짜 사용
 
     try {
       final response = await http.post(
@@ -89,13 +89,15 @@ class _InjectionPageState extends State<InjectionPage> {
 
   void _updateButtonStates() {
     final today = DateTime.now().day;
-    for (int i = 1; i <= 31; i++) {
-      if (injectionData[i - 1] == 1) {
-        buttonStates[i] = true;
-      } else if (i == today) {
-        buttonStates[i] = false;
+    setState(() {
+      for (int i = 1; i <= 31; i++) {
+        if (i <= injectionData.length && injectionData[i - 1] == 1) {
+          buttonStates[i] = true;
+        } else if (i == today) {
+          buttonStates[i] = false;
+        }
       }
-    }
+    });
   }
 
   _saveButtonStates() async {
