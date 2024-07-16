@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:intl/intl.dart';
+import 'package:client/shared_preferences_helper.dart';
 
 class CounselingPage extends StatefulWidget {
   @override
@@ -6,43 +10,46 @@ class CounselingPage extends StatefulWidget {
 }
 
 class _CounselingPageState extends State<CounselingPage> {
-  final TextEditingController _questionController = TextEditingController();
-  final List<Map<String, String>> _conversation = [];
+  int userNo = 0;
+  String advice = '';
 
-  void _sendQuestion() {
-    String question = _questionController.text;
-    if (question.isEmpty) {
-      return;
-    }
-    setState(() {
-      _conversation.add({'role': 'user', 'content': question});
-      _questionController.clear();
-    });
-
-    // 여기에 GPT API를 호출하는 로직을 추가할 수 있습니다.
-    // 현재는 임시 응답을 추가해두었습니다.
-    setState(() {
-      _conversation.add({'role': 'bot', 'content': '이것은 GPT의 응답입니다.'});
-    });
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
   }
 
-  Widget _buildMessage(Map<String, String> message) {
-    bool isUser = message['role'] == 'user';
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        padding: EdgeInsets.all(10),
-        margin: EdgeInsets.symmetric(vertical: 5),
-        decoration: BoxDecoration(
-          color: isUser ? Colors.blueAccent : Colors.grey[300],
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Text(
-          message['content']!,
-          style: TextStyle(color: isUser ? Colors.white : Colors.black),
-        ),
-      ),
+  Future<void> _loadUserData() async {
+    userNo = await SharedPreferencesHelper.getUserNo() ?? 0;
+    _sendDailyAdvice(); // 하루에 한 번 전날 데이터를 활용하여 상담을 받습니다.
+  }
+
+  Future<void> _sendDailyAdvice() async {
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:5000/counseling'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'user_no': userNo,
+        'measure_date': DateFormat('yyyy-MM-dd').format(DateTime.now().subtract(Duration(days: 1))), // 전날 데이터 사용
+      }),
     );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        advice = data['response'];
+      });
+    } else if (response.statusCode == 808) {
+      setState(() {
+        advice = '전날 측정한 기록이 없습니다.';
+      });
+    } else {
+      setState(() {
+        advice = '알 수 없는 오류가 발생했습니다.';
+      });
+    }
   }
 
   @override
@@ -59,38 +66,15 @@ class _CounselingPageState extends State<CounselingPage> {
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.all(16.0),
-              itemCount: _conversation.length,
-              itemBuilder: (context, index) {
-                return _buildMessage(_conversation[index]);
-              },
-            ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+          child: Text(
+            advice.isNotEmpty ? advice : '상담 내용을 불러오는 중입니다...',
+            style: TextStyle(fontSize: 18, color: Colors.black),
+            textAlign: TextAlign.center,
           ),
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _questionController,
-                    decoration: InputDecoration(
-                      hintText: '질문을 입력하세요...',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.send),
-                  onPressed: _sendQuestion,
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
