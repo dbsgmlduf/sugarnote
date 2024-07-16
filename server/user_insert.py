@@ -3,6 +3,7 @@ from mysql.connector import Error
 # 환경변수 설정
 from dotenv import load_dotenv
 import os
+import hashlib
 
 def get_db_connection():
     try:
@@ -30,14 +31,15 @@ def insert_user(name,age,height, weight,ID,PW):
             count = cursor.fetchone()[0]
             
             if count > 0:
-                return "EXIST"
-            
+                return "EXIST"  
+             
             # userinfo 테이블에 데이터 삽입
             insert_query = """
             INSERT INTO user (name,age,height, weight,ID,PW)
             VALUES (%s, %s, %s, %s, %s, %s)
             """
-            record = (name,age,height, weight,ID,PW)
+            hashed_PW = hashlib.sha1(PW.encode()).hexdigest() 
+            record = (name,age,height, weight,ID,hashed_PW)
 
             cursor.execute(insert_query, record)
             connection.commit()
@@ -64,7 +66,8 @@ def get_user(ID, PW):
             SELECT * FROM user
             WHERE ID = %s AND PW = %s
             """
-            cursor.execute(select_query, (ID, PW))
+            hashed_PW = hashlib.sha1(PW.encode()).hexdigest()
+            cursor.execute(select_query, (ID, hashed_PW))
             user = cursor.fetchone()
 
             if user:
