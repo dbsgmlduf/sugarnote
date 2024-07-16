@@ -11,11 +11,9 @@ class InjectionPage extends StatefulWidget {
 }
 
 class _InjectionPageState extends State<InjectionPage> {
-  Map<int, bool> buttonStates = {};
-  String lastInjectionDate = '';
+  Map<int, bool> injectionData = {}; // 데이터를 저장할 맵
   bool isInjectionCompletedToday = false;
   int userNo = 0;
-  List<int> injectionData = List.filled(31, 0); // 데이터를 저장할 리스트
 
   @override
   void initState() {
@@ -25,32 +23,8 @@ class _InjectionPageState extends State<InjectionPage> {
 
   Future<void> _loadUserData() async {
     userNo = await SharedPreferencesHelper.getUserNo() ?? 0;
-    _loadButtonStates();
-    _checkForMonthChange();
-  }
-
-  _checkForMonthChange() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    int currentMonth = DateTime.now().month;
-    int savedMonth = prefs.getInt('savedMonth') ?? currentMonth;
-
-    if (currentMonth != savedMonth) {
-      setState(() {
-        buttonStates.clear();
-        prefs.setInt('savedMonth', currentMonth);
-      });
-      prefs.remove('buttonStates');
-    }
-  }
-
-  _loadButtonStates() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      lastInjectionDate = prefs.getString('lastInjectionDate') ?? '';
-      buttonStates = _stringToMap(prefs.getString('buttonStates') ?? '');
-      isInjectionCompletedToday = prefs.getBool('isInjectionCompletedToday') ?? false;
-    });
-    _fetchInjectionData();
+    print('User No: $userNo'); // 디버깅용 출력
+    _fetchInjectionData(); // 데이터를 가져오기
   }
 
   Future<void> _fetchInjectionData() async {
@@ -67,14 +41,29 @@ class _InjectionPageState extends State<InjectionPage> {
           'measure_date': measure_date,
         }),
       );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['message'] == '1') {
-          final injectionValues = data['measure'].split(',').map((e) => int.parse(e)).toList();
+        print('Response body: $data'); // 데이터를 로그에 출력
+        print('data[message] type: ${data['message'].runtimeType}'); // 데이터 타입 로그
+        print('data[message]: ${data['message']}');
+
+        if (data['message'] == "1") { // 문자열 "1"과 비교
+          print('Message is 1');
+          final injectionValues = data['injection'].split(',');
+          print('Message is 2');
+          print('injectionValues: ${injectionValues}');
           setState(() {
-            injectionData = injectionValues;
+            injectionData = {
+              for (int i = 0; i < injectionValues.length; i++)
+                i + 1: injectionValues[i] != '0'
+            };
+
             _updateButtonStates();
           });
+
+          // 디버깅용 데이터 출력
+          print('Injection Data: $injectionData');
         } else {
           print('Failed to fetch injection data: ${data['message']}');
         }
@@ -89,49 +78,19 @@ class _InjectionPageState extends State<InjectionPage> {
   void _updateButtonStates() {
     final today = DateTime.now().day;
     setState(() {
-      for (int i = 1; i <= 31; i++) {
-        if (i <= injectionData.length && injectionData[i - 1] == 1) {
-          buttonStates[i] = true;
-        } else if (i == today) {
-          buttonStates[i] = false;
-        }
-      }
+      isInjectionCompletedToday = injectionData[today] ?? false;
     });
-  }
 
-  _saveButtonStates() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('lastInjectionDate', lastInjectionDate);
-    prefs.setInt('savedMonth', DateTime.now().month);
-    prefs.setString('buttonStates', _mapToString(buttonStates));
-    prefs.setBool('isInjectionCompletedToday', isInjectionCompletedToday);
-  }
-
-  Map<int, bool> _stringToMap(String mapString) {
-    if (mapString.isEmpty) {
-      return {};
-    }
-    return Map<int, bool>.fromEntries(
-      mapString.split(',').map((entry) {
-        List<String> keyValue = entry.split(':');
-        return MapEntry(int.parse(keyValue[0]), keyValue[1] == 'true');
-      }),
-    );
-  }
-
-  String _mapToString(Map<int, bool> map) {
-    return map.entries.map((e) => '${e.key}:${e.value}').join(',');
+    // 디버깅용 출력
+    print('Updated button states: $injectionData');
   }
 
   _handleInjectionComplete() {
     setState(() {
       final today = DateTime.now().day;
-      injectionData[today - 1] = 1;
-      buttonStates[today] = true;
-      lastInjectionDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      injectionData[today] = true;
       isInjectionCompletedToday = true;
     });
-    _saveButtonStates();
     _submitInjectionData();
   }
 
@@ -147,7 +106,7 @@ class _InjectionPageState extends State<InjectionPage> {
         body: jsonEncode(<String, dynamic>{
           'user_no': userNo,
           'measure_date': measure_date,
-          'new_measure': injectionData.join(','),
+          'new_measure': injectionData.values.map((e) => e ? 1 : 0).join(','),
         }),
       );
 
@@ -155,6 +114,8 @@ class _InjectionPageState extends State<InjectionPage> {
         final data = jsonDecode(response.body);
         if (data['message'] != '1') {
           print('Failed to submit injection data: ${data['message']}');
+        } else {
+          print('Injection data submitted successfully'); // 디버깅용 출력
         }
       } else {
         print('Failed to submit injection data. Status code: ${response.statusCode}');
@@ -166,7 +127,7 @@ class _InjectionPageState extends State<InjectionPage> {
 
   bool _canCompleteInjectionToday() {
     final today = DateTime.now().day;
-    return buttonStates[today] == false || buttonStates[today] == null;
+    return injectionData[today] == null || injectionData[today] == false;
   }
 
   @override
@@ -206,7 +167,7 @@ class _InjectionPageState extends State<InjectionPage> {
                             margin: EdgeInsets.all(2.0), // 간격을 조절
                             child: CircleAvatar(
                               radius: 20, // 크기를 조절
-                              backgroundColor: buttonStates[index] == true ? Colors.green : Colors.grey,
+                              backgroundColor: injectionData[index] == true ? Colors.green : Colors.grey,
                               child: Text(
                                 '$index',
                                 style: TextStyle(fontSize: 14), // 텍스트 크기를 조절
@@ -221,12 +182,6 @@ class _InjectionPageState extends State<InjectionPage> {
               ],
             ),
             SizedBox(height: 20),
-            Text(
-              lastInjectionDate.isNotEmpty
-                  ? '마지막 인슐린 주사 날짜: $lastInjectionDate'
-                  : '아직 주사 기록이 없습니다.',
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
             SizedBox(height: 10), // 텍스트와 버튼 사이의 간격을 조절
             ElevatedButton(
               onPressed: canCompleteToday ? _handleInjectionComplete : null,
