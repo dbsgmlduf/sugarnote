@@ -18,7 +18,6 @@ def get_db_connection():
         print("MySQL 연결 오류:", e)
         return None
  
-}
 def add_exercise(user_no, exercise, exercise_time, measure_date):
     try:
         connection = get_db_connection()
