@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-
 class SignupPage extends StatefulWidget {
   @override
   _SignupPageState createState() => _SignupPageState();
@@ -77,7 +76,7 @@ class _SignupPageState extends State<SignupPage> {
               title: Text("키"),
               subtitle: Text(_heightController.text.isEmpty ? "선택되지 않음" : "${_heightController.text} cm"),
               trailing: Icon(Icons.arrow_drop_down),
-              onTap: () => _selectValue(context, "키", _heightController, 0, 300, " cm"),
+              onTap: () => _selectHeight(context),
             ),
             ListTile(
               title: Text("몸무게"),
@@ -133,5 +132,89 @@ class _SignupPageState extends State<SignupPage> {
         );
       },
     );
+  }
+
+  void _selectHeight(BuildContext context) {
+    int selectedMeters = 0;
+    int selectedCentimeters = 0;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('키'),
+              content: Container(
+                width: double.minPositive,
+                height: 100.0, // 줄인 높이
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Column(
+                      children: [
+                        Text('미터'),
+                        DropdownButton<int>(
+                          value: selectedMeters,
+                          items: List.generate(4, (index) => index).map((value) {
+                            return DropdownMenuItem<int>(
+                              value: value,
+                              child: Text('$value'),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              selectedMeters = value!;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Text('센티미터'),
+                        DropdownButton<int>(
+                          value: selectedCentimeters,
+                          items: List.generate(100, (index) => index).map((value) {
+                            return DropdownMenuItem<int>(
+                              value: value,
+                              child: Text('$value'),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              selectedCentimeters = value!;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _heightController.text = (selectedMeters * 100 + selectedCentimeters).toString();
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('확인'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('취소'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((_) {
+      setState(() {});
+    });
   }
 }
